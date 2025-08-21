@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankApp - {% block title %}{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Gris claro */
+            color: #333;
+        }
+        .navbar {
+            background-color: #3b82f6; /* Azul de Tailwind 500 */
+        }
+        .navbar a {
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s ease;
+        }
+        .navbar a:hover {
+            background-color: #2563eb; /* Azul de Tailwind 600 */
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+        /* Estilos para messages de Django */
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1rem;
+        }
+        .messages li {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .messages .success {
+            background-color: #d1fae5; /* Verde claro */
+            color: #065f46; /* Verde oscuro */
+            border: 1px solid #34d399;
+        }
+        .messages .error {
+            background-color: #fee2e2; /* Rojo claro */
+            color: #991b1b; /* Rojo oscuro */
+            border: 1px solid #ef4444;
+        }
+        .messages .info {
+            background-color: #e0f2fe; /* Azul claro */
+            color: #0c4a6e; /* Azul oscuro */
+            border: 1px solid #60a5fa;
+        }
+        .messages .warning {
+            background-color: #fffbeb; /* Amarillo claro */
+            color: #92400e; /* Amarillo oscuro */
+            border: 1px solid #fbbf24;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <nav class="navbar p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{% url 'core_bank:dashboard' %}" class="text-2xl font-bold rounded-lg px-4 py-2 hover:bg-blue-600 transition duration-300">BankApp</a>
+            <div class="flex space-x-4 items-center">
+                {% if user.is_authenticated %}
+                    <span class="text-white text-lg hidden md:block">¡Hola, {{ user.first_name }}!</span>
+                    <a href="{% url 'core_bank:dashboard' %}" class="hover:bg-blue-600">Dashboard</a>
+                    <a href="{% url 'core_bank:transfer' %}" class="hover:bg-blue-600">Transferir</a>
+                    <a href="{% url 'core_bank:services' %}" class="hover:bg-blue-600">Pagar Servicios</a>
+                    <a href="{% url 'core_bank:history' %}" class="hover:bg-blue-600">Historial</a>
+                    <a href="{% url 'core_bank:logout' %}" class="hover:bg-red-600 bg-red-500 rounded-lg px-3 py-1">Cerrar Sesión</a>
+                {% else %}
+                    <a href="{% url 'core_bank:login' %}" class="hover:bg-blue-600">Iniciar Sesión</a>
+                    <a href="{% url 'core_bank:register' %}" class="hover:bg-blue-600">Registrarse</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }} text-center"{% endif %}>
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-gray-800 text-white p-4 mt-8">
+        <div class="container mx-auto text-center text-sm">
+            &copy; 2025 BankApp. Todos los derechos reservados.
+        </div>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+</body>
+</html>

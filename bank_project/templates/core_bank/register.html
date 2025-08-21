@@ -1,0 +1,153 @@
+{% extends 'core_bank/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Registrarse{% endblock %}
+
+{% block content %}
+<div class="card p-6 shadow-md border-b-4 border-blue-500 max-w-lg mx-auto mt-10">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Crear una Cuenta</h1>
+
+    <form method="post" class="space-y-4" id="registerForm">
+        {% csrf_token %}
+        {{ form.dni|as_crispy_field }}
+        <div id="dni-loading" class="text-blue-500 text-sm mt-1" style="display: none;">
+            Cargando información del DNI...
+        </div>
+        {{ form.first_name|as_crispy_field }}
+        {{ form.last_name|as_crispy_field }}
+        {{ form.username|as_crispy_field }}
+        {{ form.email|as_crispy_field }}
+       {{ form.password1|as_crispy_field }}
+{{ form.password2|as_crispy_field }}
+
+
+        <button type="submit" class="btn-primary w-full text-xl font-bold bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+            Registrarse
+        </button>
+    </form>
+
+    <div class="mt-6 text-center">
+<p class="text-gray-600">¿Ya tienes una cuenta? <a href="{% url 'core_bank:login' %}" class="text-blue-600 hover:underline">Iniciar Sesión</a></p>    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dniInput = document.getElementById('id_dni');
+        const firstNameInput = document.getElementById('id_first_name');
+        const lastNameInput = document.getElementById('id_last_name');
+        const dniLoading = document.getElementById('dni-loading');
+
+        // Deshabilitar campos de nombre y apellido al cargar la página
+        firstNameInput.readOnly = true;
+        lastNameInput.readOnly = true;
+
+        let typingTimer;
+        const doneTypingInterval = 800; // 0.8 segundos después de que el usuario deja de escribir
+
+        dniInput.addEventListener('keyup', () => {
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(fetchDNIInfo, doneTypingInterval);
+        });
+
+        dniInput.addEventListener('keydown', () => {
+            clearTimeout(typingTimer);
+            dniLoading.style.display = 'none'; // Oculta el mensaje de carga si el usuario vuelve a escribir
+            firstNameInput.value = ''; // Limpia los campos mientras se escribe
+            lastNameInput.value = '';
+        });
+
+        function fetchDNIInfo() {
+            const dni = dniInput.value.trim();
+
+            if (dni.length === 8 && /^\d+$/.test(dni)) {
+                dniLoading.style.display = 'block'; // Muestra el mensaje de carga
+
+                // Obtener el token CSRF para la solicitud POST
+                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+fetch('{% url "core_bank:get_dni_info" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: `dni=${dni}`
+                })
+                .then(response => {
+                    dniLoading.style.display = 'none'; // Oculta el mensaje de carga
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    // Si la respuesta no es OK, leer el error del JSON
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.error || 'Error desconocido al obtener información del DNI.');
+                    });
+                })
+                .then(data => {
+                    if (data.success) {
+                        firstNameInput.value = data.nombres || '';
+                        lastNameInput.value = (data.apellidoPaterno || '') + ' ' + (data.apellidoMaterno || '');
+                        firstNameInput.classList.remove('border-red-500'); // Quita bordes de error
+                        lastNameInput.classList.remove('border-red-500');
+                        dniInput.classList.remove('border-red-500');
+                        document.querySelector('#error_1_id_dni')?.remove(); // Elimina mensajes de error previos
+                        document.querySelector('#error_1_id_first_name')?.remove();
+                        document.querySelector('#error_1_id_last_name')?.remove();
+                    } else {
+                        // Muestra el error de la API
+                        alert('Error DNI: ' + data.error);
+                        dniInput.classList.add('border-red-500');
+                        firstNameInput.value = '';
+                        lastNameInput.value = '';
+                        // Intenta añadir un mensaje de error visualmente al campo DNI
+                        let errorDiv = document.querySelector('#error_1_id_dni');
+                        if (!errorDiv) {
+                            errorDiv = document.createElement('div');
+                            errorDiv.id = 'error_1_id_dni';
+                            errorDiv.className = 'text-red-500 text-sm mt-1';
+                            dniInput.parentNode.appendChild(errorDiv);
+                        }
+                        errorDiv.textContent = data.error;
+                    }
+                })
+                .catch(error => {
+                    dniLoading.style.display = 'none'; // Oculta el mensaje de carga
+                    console.error('Fetch error:', error);
+                    alert('Error al conectar con la API de DNI: ' + error.message);
+                    dniInput.classList.add('border-red-500');
+                    firstNameInput.value = '';
+                    lastNameInput.value = '';
+                    let errorDiv = document.querySelector('#error_1_id_dni');
+                    if (!errorDiv) {
+                        errorDiv = document.createElement('div');
+                        errorDiv.id = 'error_1_id_dni';
+                        errorDiv.className = 'text-red-500 text-sm mt-1';
+                        dniInput.parentNode.appendChild(errorDiv);
+                    }
+                    errorDiv.textContent = 'Error al obtener datos del DNI.';
+                });
+            } else if (dni.length > 0 && (dni.length !== 8 || !/^\d+$/.test(dni))) {
+                 // Si el DNI no es válido (no 8 dígitos o no numérico)
+                dniLoading.style.display = 'none';
+                firstNameInput.value = '';
+                lastNameInput.value = '';
+                dniInput.classList.add('border-red-500');
+                let errorDiv = document.querySelector('#error_1_id_dni');
+                if (!errorDiv) {
+                    errorDiv = document.createElement('div');
+                    errorDiv.id = 'error_1_id_dni';
+                    errorDiv.className = 'text-red-500 text-sm mt-1';
+                    dniInput.parentNode.appendChild(errorDiv);
+                }
+                errorDiv.textContent = 'El DNI debe ser de 8 dígitos numéricos.';
+            } else {
+                dniLoading.style.display = 'none';
+                firstNameInput.value = '';
+                lastNameInput.value = '';
+                dniInput.classList.remove('border-red-500');
+                document.querySelector('#error_1_id_dni')?.remove();
+            }
+        }
+    });
+</script>
+{% endblock %}

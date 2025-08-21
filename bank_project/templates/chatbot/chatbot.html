@@ -1,0 +1,93 @@
+<div class="flex flex-col h-96 bg-gray-50 rounded-lg shadow-inner border border-gray-200">
+    <div class="flex-grow p-4 overflow-y-auto flex flex-col" id="chat-messages">
+        <!-- Mensaje de bienvenida inicial del bot -->
+        <div class="bg-blue-100 text-blue-800 p-3 rounded-lg self-start mb-2 max-w-[80%]">
+            Hola, soy tu asistente bancario virtual. ¿En qué puedo ayudarte hoy?
+        </div>
+        <!-- Los mensajes del chat se insertarán dinámicamente aquí -->
+    </div>
+    
+    <div class="p-4 border-t border-gray-200 flex items-center">
+        <input type="text" id="user-input" placeholder="Escribe tu mensaje..."
+               class="flex-grow input input-bordered rounded-lg px-4 py-2 mr-2 focus:ring-blue-500 focus:border-blue-500"
+               onkeypress="handleKeyPress(event)">
+        <button id="send-button"
+                class="btn-primary bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg text-white font-semibold flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+
+        // Función para añadir un mensaje al DOM del chat
+        function appendMessage(sender, message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('p-3', 'rounded-lg', 'mb-2', 'max-w-[80%]');
+
+            if (sender === 'user') {
+                messageDiv.classList.add('bg-blue-500', 'text-white', 'self-end', 'ml-auto');
+            } else { // sender === 'bot'
+                messageDiv.classList.add('bg-gray-200', 'text-gray-800', 'self-start');
+            }
+            messageDiv.textContent = message;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll al final para ver el último mensaje
+        }
+
+        // Función para enviar el mensaje del usuario y obtener la respuesta del chatbot
+        function getChatbotResponse(message) {
+            appendMessage('user', message); // Añade el mensaje del usuario al chat
+            userInput.value = ''; // Limpia el input del usuario
+
+            // Muestra un indicador de carga mientras el bot "escribe"
+            const loadingDiv = document.createElement('div');
+            loadingDiv.classList.add('bg-gray-200', 'text-gray-800', 'p-3', 'rounded-lg', 'mb-2', 'self-start', 'animate-pulse');
+            loadingDiv.textContent = 'Escribiendo...';
+            loadingDiv.id = 'loading-indicator'; // Asigna un ID para poder removerlo
+            chatMessages.appendChild(loadingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll al indicador de carga
+
+
+            // Realiza la llamada a la API de tu backend para obtener la respuesta del chatbot (Cohere)
+            fetch(`/chatbot/interact/?message=${encodeURIComponent(message)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const existingLoadingDiv = document.getElementById('loading-indicator');
+                    if (existingLoadingDiv) {
+                        existingLoadingDiv.remove(); // Elimina el indicador de carga una vez que llega la respuesta
+                    }
+                    appendMessage('bot', data.response); // Añade la respuesta del bot al chat
+                })
+                .catch(error => {
+                    const existingLoadingDiv = document.getElementById('loading-indicator');
+                    if (existingLoadingDiv) {
+                        existingLoadingDiv.remove(); // Elimina el indicador de carga si hay un error
+                    }
+                    console.error('Error al obtener respuesta del chatbot:', error);
+                    appendMessage('bot', 'Lo siento, hubo un problema al conectar con el asistente. Por favor, inténtalo de nuevo.');
+                });
+        }
+
+        // Event listener para el botón de enviar
+        sendButton.addEventListener('click', () => {
+            const message = userInput.value.trim(); // Obtiene y limpia el mensaje del usuario
+            if (message) { // Solo envía si el mensaje no está vacío
+                getChatbotResponse(message);
+            }
+        });
+
+        // Event listener para la tecla Enter en el campo de texto
+        window.handleKeyPress = function(event) {
+            if (event.key === 'Enter') {
+                sendButton.click(); // Simula un click en el botón de enviar
+            }
+        };
+    });
+</script>

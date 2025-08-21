@@ -1,0 +1,101 @@
+{% extends 'core_bank/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-8">
+    <div class="w-full lg:w-1/2 flex flex-col gap-6">
+        <div class="card p-6 shadow-md border-b-4 border-blue-500">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Bienvenido, {{ user.first_name }} {{ user.last_name }}</h2>
+            <p class="text-lg text-gray-600 mb-2">Usuario: <span class="font-semibold text-gray-700">{{ user.username }}</span></p>
+            <p class="text-lg text-gray-600 mb-4">DNI: <span class="font-semibold text-gray-700">{{ user.dni }}</span></p>
+            <div class="bg-blue-100 p-4 rounded-lg flex items-center justify-between shadow-inner">
+                <span class="text-2xl font-bold text-blue-800">Saldo Disponible:</span>
+                <span class="text-4xl font-extrabold text-blue-800">S/ {{ user.balance|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <div class="card p-6 shadow-md border-b-4 border-green-500">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Acciones Rápidas</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <a href="{% url 'core_bank:transfer' %}" class="btn-primary flex items-center justify-center space-x-2 p-4 rounded-xl text-xl font-semibold bg-green-500 hover:bg-green-600 transition duration-300 transform hover:scale-105">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    <span>Transferir</span>
+                </a>
+                <a href="{% url 'core_bank:services' %}" class="btn-primary flex items-center justify-center space-x-2 p-4 rounded-xl text-xl font-semibold bg-purple-500 hover:bg-purple-600 transition duration-300 transform hover:scale-105">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h10M3 10v7a2 2 0 002 2h14a2 2 0 002-2v-7M3 10l2.5-4.5M21 10l-2.5-4.5M10 3v4m4-4v4" />
+                    </svg>
+                    <span>Pagar Servicios</span>
+                </a>
+                <a href="{% url 'core_bank:history' %}" class="btn-primary flex items-center justify-center space-x-2 p-4 rounded-xl text-xl font-semibold bg-orange-500 hover:bg-orange-600 transition duration-300 transform hover:scale-105 col-span-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V4m0 8v4m0 8h.01M12 4h.01M21 12h.01M3 12h.01M16.5 3.5l-2 2M7.5 20.5l-2-2M18.5 7.5l-2-2M5.5 16.5l-2 2" />
+                    </svg>
+                    <span>Ver Historial</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="w-full lg:w-1/2 flex flex-col gap-6">
+        <div class="card p-6 shadow-md border-b-4 border-yellow-500">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Actividad Reciente</h3>
+            <div class="overflow-x-auto">
+                {% if recent_transactions or recent_payments %}
+                    <table class="table-auto w-full text-left">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
+                                <th class="py-3 px-6">Tipo</th>
+                                <th class="py-3 px-6">Detalle</th>
+                                <th class="py-3 px-6">Monto</th>
+                                <th class="py-3 px-6">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-600 text-sm font-light">
+                            {% for t in recent_transactions %}
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-3 px-6 text-left whitespace-nowrap">
+                                    <span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Transferencia</span>
+                                </td>
+                                <td class="py-3 px-6">
+                                    A: {{ t.receiver.first_name }} {{ t.receiver.last_name }} ({{ t.receiver.username }})
+                                </td>
+                                <td class="py-3 px-6 text-red-500 font-semibold">- S/{{ t.amount|floatformat:2 }}</td>
+                                <td class="py-3 px-6">{{ t.timestamp|date:"d M, H:i" }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% for p in recent_payments %}
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-3 px-6 text-left whitespace-nowrap">
+                                    <span class="px-2 py-1 font-semibold leading-tight text-blue-700 bg-blue-100 rounded-full">Pago Servicio</span>
+                                </td>
+                                <td class="py-3 px-6">
+                                    Servicio: {{ p.service.name }}
+                                </td>
+                                <td class="py-3 px-6 text-red-500 font-semibold">- S/{{ p.amount|floatformat:2 }}</td>
+                                <td class="py-3 px-6">{{ p.timestamp|date:"d M, H:i" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="text-gray-600">No hay actividad reciente. ¡Realiza tu primera transacción!</p>
+                {% endif %}
+            </div>
+            {% if recent_transactions or recent_payments %}
+                <div class="mt-4 text-right">
+                    <a href="{% url 'core_bank:history' %}" class="text-blue-600 hover:underline">Ver todo el historial &rarr;</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card p-6 shadow-md border-b-4 border-indigo-500">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Chatbot de Asistencia</h3>
+            {% include 'chatbot/chatbot.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}
