@@ -202,17 +202,6 @@ bank_app_django/
 | POST | `/deposit/` | Realizar depósito |
 | POST | `/withdraw/` | Realizar retiro |
 
-## 📸 Capturas de Pantalla
-
-### Dashboard Principal
-![Dashboard](screenshots/dashboard.png)
-
-### Página de Transferencias
-![Transferencias](screenshots/transfers.png)
-
-### Historial de Transacciones
-![Historial](screenshots/history.png)
-
 ## 🤝 Contribuir
 
 ¡Las contribuciones son bienvenidas! Si quieres contribuir a este proyecto:
